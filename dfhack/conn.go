@@ -62,6 +62,7 @@ const (
 
 type rpcMessageHeader struct {
 	ID   int16
+	Pad  [2]byte
 	Size int32
 }
 
