@@ -63,7 +63,7 @@ func (c *Conn) BindMethod(req *dfproto.CoreBindRequest) (int32, []*dfproto.CoreT
 // RPC RunCommand : CoreRunCommandRequest -> EmptyMessage
 func (c *Conn) RunCommand(req *dfproto.CoreRunCommandRequest) ([]*dfproto.CoreTextNotification, error) {
 	var reply dfproto.EmptyMessage
-	text, err := c.RoundTripBind("RunCommand", nil, "CoreRunCommandRequest", "EmptyMessage", req, &reply)
+	text, err := c.RoundTripBind("RunCommand", nil, "dfproto.CoreRunCommandRequest", "dfproto.EmptyMessage", req, &reply)
 	return text, err
 }
 
@@ -71,7 +71,7 @@ func (c *Conn) RunCommand(req *dfproto.CoreRunCommandRequest) ([]*dfproto.CoreTe
 func (c *Conn) CoreSuspend() (int32, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply dfproto.IntMessage
-	text, err := c.RoundTripBind("CoreSuspend", nil, "EmptyMessage", "IntMessage", &req, &reply)
+	text, err := c.RoundTripBind("CoreSuspend", nil, "dfproto.EmptyMessage", "dfproto.IntMessage", &req, &reply)
 	return reply.GetValue(), text, err
 }
 
@@ -79,13 +79,13 @@ func (c *Conn) CoreSuspend() (int32, []*dfproto.CoreTextNotification, error) {
 func (c *Conn) CoreResume() (int32, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply dfproto.IntMessage
-	text, err := c.RoundTripBind("CoreResume", nil, "EmptyMessage", "IntMessage", &req, &reply)
+	text, err := c.RoundTripBind("CoreResume", nil, "dfproto.EmptyMessage", "dfproto.IntMessage", &req, &reply)
 	return reply.GetValue(), text, err
 }
 
 // RPC RunLua : CoreRunLuaRequest -> StringListMessage
 func (c *Conn) RunLua(req *dfproto.CoreRunLuaRequest) ([]string, []*dfproto.CoreTextNotification, error) {
 	var reply dfproto.StringListMessage
-	text, err := c.RoundTripBind("RunLua", nil, "CoreRunLuaRequest", "StringListMessage", req, &reply)
+	text, err := c.RoundTripBind("RunLua", nil, "dfproto.CoreRunLuaRequest", "dfproto.StringListMessage", req, &reply)
 	return reply.GetValue(), text, err
 }

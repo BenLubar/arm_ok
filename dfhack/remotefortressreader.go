@@ -11,7 +11,7 @@ var pluginRemoteFortressReader = "RemoteFortressReader"
 func (c *Conn) GetGrowthList() (*RemoteFortressReader.MaterialList, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply RemoteFortressReader.MaterialList
-	text, err := c.RoundTripBind("GetGrowthList", &pluginRemoteFortressReader, "EmptyMessage", "MaterialList", &req, &reply)
+	text, err := c.RoundTripBind("GetGrowthList", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "RemoteFortressReader.MaterialList", &req, &reply)
 	return &reply, text, err
 }
 
@@ -19,7 +19,7 @@ func (c *Conn) GetGrowthList() (*RemoteFortressReader.MaterialList, []*dfproto.C
 func (c *Conn) GetMaterialList() (*RemoteFortressReader.MaterialList, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply RemoteFortressReader.MaterialList
-	text, err := c.RoundTripBind("GetMaterialList", &pluginRemoteFortressReader, "EmptyMessage", "MaterialList", &req, &reply)
+	text, err := c.RoundTripBind("GetMaterialList", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "RemoteFortressReader.MaterialList", &req, &reply)
 	return &reply, text, err
 }
 
@@ -27,21 +27,21 @@ func (c *Conn) GetMaterialList() (*RemoteFortressReader.MaterialList, []*dfproto
 func (c *Conn) GetTiletypeList() (*RemoteFortressReader.TiletypeList, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply RemoteFortressReader.TiletypeList
-	text, err := c.RoundTripBind("GetTiletypeList", &pluginRemoteFortressReader, "EmptyMessage", "TiletypeList", &req, &reply)
+	text, err := c.RoundTripBind("GetTiletypeList", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "RemoteFortressReader.TiletypeList", &req, &reply)
 	return &reply, text, err
 }
 
 // RPC GetBlockList : BlockRequest -> BlockList
 func (c *Conn) GetBlockList(req *RemoteFortressReader.BlockRequest) (*RemoteFortressReader.BlockList, []*dfproto.CoreTextNotification, error) {
 	var reply RemoteFortressReader.BlockList
-	text, err := c.RoundTripBind("GetBlockList", &pluginRemoteFortressReader, "BlockRequest", "BlockList", req, &reply)
+	text, err := c.RoundTripBind("GetBlockList", &pluginRemoteFortressReader, "RemoteFortressReader.BlockRequest", "RemoteFortressReader.BlockList", req, &reply)
 	return &reply, text, err
 }
 
 // RPC GetPlantList : BlockRequest -> PlantList
 func (c *Conn) GetPlantList(req *RemoteFortressReader.BlockRequest) (*RemoteFortressReader.PlantList, []*dfproto.CoreTextNotification, error) {
 	var reply RemoteFortressReader.PlantList
-	text, err := c.RoundTripBind("GetPlantList", &pluginRemoteFortressReader, "BlockRequest", "PlantList", req, &reply)
+	text, err := c.RoundTripBind("GetPlantList", &pluginRemoteFortressReader, "RemoteFortressReader.BlockRequest", "RemoteFortressReader.PlantList", req, &reply)
 	return &reply, text, err
 }
 
@@ -49,7 +49,7 @@ func (c *Conn) GetPlantList(req *RemoteFortressReader.BlockRequest) (*RemoteFort
 func (c *Conn) CheckHashes() ([]*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply dfproto.EmptyMessage
-	text, err := c.RoundTripBind("CheckHashes", &pluginRemoteFortressReader, "EmptyMessage", "EmptyMessage", &req, &reply)
+	text, err := c.RoundTripBind("CheckHashes", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "dfproto.EmptyMessage", &req, &reply)
 	return text, err
 }
 
@@ -57,7 +57,7 @@ func (c *Conn) CheckHashes() ([]*dfproto.CoreTextNotification, error) {
 func (c *Conn) GetUnitList() (*RemoteFortressReader.UnitList, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply RemoteFortressReader.UnitList
-	text, err := c.RoundTripBind("GetUnitList", &pluginRemoteFortressReader, "EmptyMessage", "UnitList", &req, &reply)
+	text, err := c.RoundTripBind("GetUnitList", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "RemoteFortressReader.UnitList", &req, &reply)
 	return &reply, text, err
 }
 
@@ -65,7 +65,7 @@ func (c *Conn) GetUnitList() (*RemoteFortressReader.UnitList, []*dfproto.CoreTex
 func (c *Conn) GetViewInfo() (*RemoteFortressReader.ViewInfo, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply RemoteFortressReader.ViewInfo
-	text, err := c.RoundTripBind("GetViewInfo", &pluginRemoteFortressReader, "EmptyMessage", "ViewInfo", &req, &reply)
+	text, err := c.RoundTripBind("GetViewInfo", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "RemoteFortressReader.ViewInfo", &req, &reply)
 	return &reply, text, err
 }
 
@@ -73,7 +73,7 @@ func (c *Conn) GetViewInfo() (*RemoteFortressReader.ViewInfo, []*dfproto.CoreTex
 func (c *Conn) GetMapInfo() (*RemoteFortressReader.MapInfo, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply RemoteFortressReader.MapInfo
-	text, err := c.RoundTripBind("GetMapInfo", &pluginRemoteFortressReader, "EmptyMessage", "MapInfo", &req, &reply)
+	text, err := c.RoundTripBind("GetMapInfo", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "RemoteFortressReader.MapInfo", &req, &reply)
 	return &reply, text, err
 }
 
@@ -81,6 +81,6 @@ func (c *Conn) GetMapInfo() (*RemoteFortressReader.MapInfo, []*dfproto.CoreTextN
 func (c *Conn) ResetMapHashes() ([]*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
 	var reply dfproto.EmptyMessage
-	text, err := c.RoundTripBind("ResetMapHashes", &pluginRemoteFortressReader, "EmptyMessage", "EmptyMessage", &req, &reply)
+	text, err := c.RoundTripBind("ResetMapHashes", &pluginRemoteFortressReader, "dfproto.EmptyMessage", "dfproto.EmptyMessage", &req, &reply)
 	return text, err
 }
