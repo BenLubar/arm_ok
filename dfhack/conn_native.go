@@ -14,7 +14,7 @@ func Connect() (*Conn, error) {
 		port = 5000
 	}
 
-	return Dial(net.JoinHostPort("localhost", strconv.Itoa(port)))
+	return Dial(net.JoinHostPort("127.0.0.1", strconv.Itoa(port)))
 }
 
 func Dial(addr string) (*Conn, error) {
