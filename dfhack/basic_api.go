@@ -2,6 +2,22 @@ package dfhack
 
 import "github.com/BenLubar/arm_ok/dfhack/dfproto"
 
+// RPC GetVersion : EmptyMessage -> StringMessage
+func (c *Conn) GetVersion() (string, []*dfproto.CoreTextNotification, error) {
+	var req dfproto.EmptyMessage
+	var reply dfproto.StringMessage
+	text, err := c.RoundTripBind("GetVersion", nil, "dfproto.EmptyMessage", "dfproto.StringMessage", &req, &reply)
+	return reply.GetValue(), text, err
+}
+
+// RPC GetDFVersion : EmptyMessage -> StringMessage
+func (c *Conn) GetDFVersion() (string, []*dfproto.CoreTextNotification, error) {
+	var req dfproto.EmptyMessage
+	var reply dfproto.StringMessage
+	text, err := c.RoundTripBind("GetDFVersion", nil, "dfproto.EmptyMessage", "dfproto.StringMessage", &req, &reply)
+	return reply.GetValue(), text, err
+}
+
 // RPC GetWorldInfo : EmptyMessage -> GetWorldInfoOut
 func (c *Conn) GetWorldInfo() (*dfproto.GetWorldInfoOut, []*dfproto.CoreTextNotification, error) {
 	var req dfproto.EmptyMessage
