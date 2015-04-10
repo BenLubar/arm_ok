@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/BenLubar/arm_ok/dfhack"
+	"github.com/BenLubar/arm_ok/dfhack/RemoteFortressReader"
 	"github.com/BenLubar/arm_ok/dfhack/dfproto"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/websocket"
@@ -273,6 +274,126 @@ var (
 				return ctx.Respond(resp, text, err)
 			},
 		},
+		{
+			Command: "GetGrowthList",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "dfproto.EmptyMessage",
+			Out:     "RemoteFortressReader.MaterialList",
+			Handle: func(ctx *proxy_ctx) error {
+				var req dfproto.EmptyMessage
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetGrowthList()
+				return ctx.Respond(resp, text, err)
+			},
+		},
+		{
+			Command: "GetMaterialList",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "dfproto.EmptyMessage",
+			Out:     "RemoteFortressReader.MaterialList",
+			Handle: func(ctx *proxy_ctx) error {
+				var req dfproto.EmptyMessage
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetMaterialList()
+				return ctx.Respond(resp, text, err)
+			},
+		},
+		{
+			Command: "GetTiletypeList",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "dfproto.EmptyMessage",
+			Out:     "RemoteFortressReader.TiletypeList",
+			Handle: func(ctx *proxy_ctx) error {
+				var req dfproto.EmptyMessage
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetTiletypeList()
+				return ctx.Respond(resp, text, err)
+			},
+		},
+		{
+			Command: "GetBlockList",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "RemoteFortressReader.BlockRequest",
+			Out:     "RemoteFortressReader.BlockList",
+			Handle: func(ctx *proxy_ctx) error {
+				var req RemoteFortressReader.BlockRequest
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetBlockList(&req)
+				return ctx.Respond(resp, text, err)
+			},
+		},
+		{
+			Command: "GetPlantList",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "RemoteFortressReader.BlockRequest",
+			Out:     "RemoteFortressReader.PlantList",
+			Handle: func(ctx *proxy_ctx) error {
+				var req RemoteFortressReader.BlockRequest
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetPlantList(&req)
+				return ctx.Respond(resp, text, err)
+			},
+		},
+		{
+			Command: "GetUnitList",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "dfproto.EmptyMessage",
+			Out:     "RemoteFortressReader.UnitList",
+			Handle: func(ctx *proxy_ctx) error {
+				var req dfproto.EmptyMessage
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetUnitList()
+				return ctx.Respond(resp, text, err)
+			},
+		},
+		{
+			Command: "GetViewInfo",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "dfproto.EmptyMessage",
+			Out:     "RemoteFortressReader.ViewInfo",
+			Handle: func(ctx *proxy_ctx) error {
+				var req dfproto.EmptyMessage
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetViewInfo()
+				return ctx.Respond(resp, text, err)
+			},
+		},
+		{
+			Command: "GetMapInfo",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "dfproto.EmptyMessage",
+			Out:     "RemoteFortressReader.MapInfo",
+			Handle: func(ctx *proxy_ctx) error {
+				var req dfproto.EmptyMessage
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				resp, text, err := ctx.Conn.GetMapInfo()
+				return ctx.Respond(resp, text, err)
+			},
+		},
 	}
 )
 
@@ -321,6 +442,8 @@ func init() {
 }
 
 func proxy(in *websocket.Conn) {
+	in.PayloadType = websocket.BinaryFrame
+
 	addr := in.Request().RemoteAddr
 	defer in.Close()
 
