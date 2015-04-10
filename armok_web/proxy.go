@@ -1,14 +1,14 @@
-// +build !js
-
 package main
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"hash/adler32"
 	"io"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/BenLubar/arm_ok/dfhack"
 	"github.com/BenLubar/arm_ok/dfhack/RemoteFortressReader"
@@ -56,6 +56,8 @@ const (
 type proxy_ctx struct {
 	b []byte
 	w io.Writer
+
+	hashes map[[3]int32]uint32
 
 	Conn *dfhack.Conn
 }
@@ -125,6 +127,14 @@ func (ctx *proxy_ctx) WriteMessage(resp proto.Message) error {
 }
 
 func (ctx *proxy_ctx) Respond(resp proto.Message, text []*dfproto.CoreTextNotification, err error) error {
+	if ok, err1 := ctx.RespondPartial(text, err); ok {
+		return ctx.WriteMessage(resp)
+	} else {
+		return err1
+	}
+}
+
+func (ctx *proxy_ctx) RespondPartial(text []*dfproto.CoreTextNotification, err error) (bool, error) {
 	var errno int32
 	switch err {
 	case dfhack.ErrLinkFailure:
@@ -141,23 +151,32 @@ func (ctx *proxy_ctx) Respond(resp proto.Message, text []*dfproto.CoreTextNotifi
 		errno = cr_not_found
 	case nil:
 	default:
-		return err
+		return false, err
 	}
 
 	for _, t := range text {
 		if err := ctx.WriteText(t); err != nil {
-			return err
+			return false, err
 		}
 	}
 
 	if errno == 0 {
-		return ctx.WriteMessage(resp)
+		return true, nil
 	}
-	return ctx.WriteError(errno, "")
+	return false, ctx.WriteError(errno, "")
+}
+
+type MapBlock struct {
+	Block *RemoteFortressReader.MapBlock
+	Hash  uint32
 }
 
 var (
 	pluginRemoteFortressReader = "RemoteFortressReader"
+
+	mapBlocks = make(map[[3]int32]MapBlock)
+	mapLock   sync.Mutex
+	mapOnce   sync.Once
 
 	CoreMessages    = make(map[string]int16)
 	PluginMessages  = make(map[string]map[string]int16)
@@ -320,6 +339,22 @@ var (
 			},
 		},
 		{
+			Command: "ResetMapHashes",
+			Plugin:  &pluginRemoteFortressReader,
+			In:      "dfproto.EmptyMessage",
+			Out:     "dfproto.EmptyMessage",
+			Handle: func(ctx *proxy_ctx) error {
+				var req dfproto.EmptyMessage
+				if err := ctx.ReadMessage(&req); err != nil {
+					return err
+				}
+
+				ctx.hashes = make(map[[3]int32]uint32)
+
+				return ctx.WriteMessage(&dfproto.EmptyMessage{})
+			},
+		},
+		{
 			Command: "GetBlockList",
 			Plugin:  &pluginRemoteFortressReader,
 			In:      "RemoteFortressReader.BlockRequest",
@@ -330,8 +365,117 @@ var (
 					return err
 				}
 
+				mapLock.Lock()
+				defer mapLock.Unlock()
+
+				mapOnce.Do(func() {
+					ctx.Conn.ResetMapHashes()
+				})
+
+				limit := req.BlocksNeeded
+				req.BlocksNeeded = nil
 				resp, text, err := ctx.Conn.GetBlockList(&req)
-				return ctx.Respond(resp, text, err)
+				if ok, err1 := ctx.RespondPartial(text, err); !ok {
+					return err1
+				}
+				req.BlocksNeeded = limit
+
+				for _, block := range resp.MapBlocks {
+					pos := [3]int32{block.GetMapX() / 16, block.GetMapY() / 16, block.GetMapZ()}
+					if old, ok := mapBlocks[pos]; ok {
+						if len(block.Magma) == 0 {
+							block.Magma = old.Block.Magma
+						}
+						if len(block.Water) == 0 {
+							block.Water = old.Block.Water
+						}
+						if len(block.Tiles) == 0 {
+							block.Tiles = old.Block.Tiles
+						}
+						if len(block.Materials) == 0 {
+							block.Materials = old.Block.Materials
+						}
+						if len(block.LayerMaterials) == 0 {
+							block.LayerMaterials = old.Block.LayerMaterials
+						}
+						if len(block.VeinMaterials) == 0 {
+							block.VeinMaterials = old.Block.VeinMaterials
+						}
+						if len(block.BaseMaterials) == 0 {
+							block.BaseMaterials = old.Block.BaseMaterials
+						}
+					}
+					b, err := proto.Marshal(block)
+					if err != nil {
+						// should never happen
+						panic(err)
+					}
+					mapBlocks[pos] = MapBlock{
+						Block: block,
+						Hash:  adler32.Checksum(b),
+					}
+				}
+
+				resp1 := &RemoteFortressReader.BlockList{
+					MapX: resp.MapX,
+					MapY: resp.MapY,
+				}
+
+				min_x, max_x := req.GetMinX(), req.GetMaxX()
+				min_y, max_y := req.GetMinY(), req.GetMaxY()
+				min_z, max_z := req.GetMinZ(), req.GetMaxZ()
+				center_x := (min_x + max_x) / 2
+				center_y := (min_y + max_y) / 2
+				number_of_points := ((max_x - center_x + 1) * 2) * ((max_y - center_y + 1) * 2)
+				var blocks_needed, blocks_sent int32
+				if req.BlocksNeeded != nil {
+					blocks_needed = req.GetBlocksNeeded()
+				} else {
+					blocks_needed = number_of_points * (max_z - min_z)
+				}
+				for zz := max_z - 1; zz >= min_z; zz-- {
+					// (di, dj) is a vector - direction in which we move right now
+					var di, dj int32 = 1, 0
+					// length of current segment
+					var segment_length, segment_passed int32 = 1, 0
+					// current position (i, j) and how much of current segment we passed
+					var i, j, k int32 = center_x, center_y, 0
+					for k = 0; k < number_of_points; k++ {
+						if blocks_sent >= blocks_needed {
+							break
+						}
+						if i >= min_x && i < max_x && j >= min_y && j < max_y {
+							pos := [3]int32{i, j, zz}
+							if block, ok := mapBlocks[pos]; ok {
+								// if ctx.hashes is nil, the client hasn't called ResetMapHashes yet, so whether the block gets sent or not is undefined. We take the easy route of only needing one conditional.
+								if hash, ok := ctx.hashes[pos]; ctx.hashes != nil && (!ok || hash != block.Hash) {
+									resp1.MapBlocks = append(resp1.MapBlocks, block.Block)
+									ctx.hashes[pos] = block.Hash
+								}
+							}
+						}
+
+						// make a step, add 'direction' vector (di, dj) to current position (i, j)
+						i += di
+						j += dj
+						segment_passed++
+
+						if segment_passed == segment_length {
+							// done with current segment
+							segment_passed = 0
+
+							// 'rotate' directions
+							di, dj = -dj, di
+
+							// increase segment length if necessary
+							if dj == 0 {
+								segment_length++
+							}
+						}
+					}
+				}
+
+				return ctx.WriteMessage(resp1)
 			},
 		},
 		{

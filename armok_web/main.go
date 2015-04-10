@@ -1,8 +1,5 @@
-// +build !js
-
-//go:generate rm -f armok_web.js.gen.go armok_web.js.map.gen.go index.html.gen.go asset_dev.gen.go asset_nodev.gen.go
 //go:generate go get github.com/gopherjs/gopherjs
-//go:generate gopherjs build --tags=appengine
+//go:generate gopherjs build --tags=appengine --output=armok_web.js github.com/BenLubar/arm_ok/armok_vision
 //go:generate go run asset.go -wrap handle -var _ armok_web.js
 //go:generate go run asset.go -wrap handle -var _ armok_web.js.map
 //go:generate go run asset.go -wrap handle -var index index.html
