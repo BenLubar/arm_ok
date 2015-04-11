@@ -439,6 +439,7 @@ var (
 								if hash, ok := ctx.hashes[pos]; ctx.hashes != nil && (!ok || hash != block.Hash) {
 									resp1.MapBlocks = append(resp1.MapBlocks, block.Block)
 									ctx.hashes[pos] = block.Hash
+									blocks_sent++
 								}
 							}
 						}
