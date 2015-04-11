@@ -61,7 +61,7 @@ var (
 	eyePos      mgl32.Vec3
 	eyeTarget   mgl32.Vec3
 
-	targetLerpTime = time.Second / 11
+	targetLerpTime = time.Second / 10
 	targetStart    time.Time
 	targetPos      mgl32.Vec3
 	targetTarget   mgl32.Vec3
