@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"math"
 
 	"github.com/BenLubar/arm_ok/dfhack"
@@ -56,9 +57,13 @@ func Network(stop chan chan struct{}) {
 	}
 	defer conn.Close()
 
+	log.Println("connected")
 	InitTiletypes(conn)
+	log.Println("loaded tile types")
 	InitMaterials(conn)
+	log.Println("loaded materials")
 	InitMap(conn)
+	log.Println("starting to load map")
 
 	for {
 		select {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 
 	"github.com/BenLubar/arm_ok/dfhack"
@@ -116,6 +117,7 @@ func UpdateMap(conn *dfhack.Conn) {
 		}
 
 		if any {
+			log.Println("got block", pos)
 			next = append(next, dirty{pos, tiles.Generate(pos)})
 		}
 	}
