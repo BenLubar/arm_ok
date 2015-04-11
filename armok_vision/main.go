@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/BenLubar/arm_ok/dfhack"
-	"github.com/BenLubar/arm_ok/dfhack/RemoteFortressReader"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -23,22 +22,17 @@ func main() {
 	}
 	defer CleanupGL()
 
-	conn, err := dfhack.Connect()
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close()
-
-	InitTiletypes(conn)
-	InitMaterials(conn)
-	InitMap(conn)
-
 	SetupGL()
 
-	for {
-		UpdateViewInfo(conn)
-		UpdateMap(conn)
+	stopNetwork := make(chan chan struct{})
+	go Network(stopNetwork)
+	defer func() {
+		ch := make(chan struct{})
+		stopNetwork <- ch
+		<-ch
+	}()
 
+	for {
 		PositionCamera(CalculateCamera())
 		CleanMap()
 
@@ -51,19 +45,25 @@ func main() {
 	}
 }
 
-var ViewInfo *RemoteFortressReader.ViewInfo
-
-func UpdateViewInfo(conn *dfhack.Conn) {
-	var err error
-	ViewInfo, _, err = conn.GetViewInfo()
+func Network(stop chan chan struct{}) {
+	conn, err := dfhack.Connect()
 	if err != nil {
 		panic(err)
 	}
-}
+	defer conn.Close()
 
-func CalculateCamera() mgl32.Mat4 {
-	x := float32(ViewInfo.GetViewPosX() + (ViewInfo.GetViewSizeX() / 2))
-	y := float32(ViewInfo.GetViewPosY() + (ViewInfo.GetViewSizeY() / 2))
-	z := float32(ViewInfo.GetViewPosZ())
-	return mgl32.Scale3D(-1, 1, 1).Mul4(mgl32.LookAtV(mgl32.Vec3{x + 1, y + 5, z + 10}, mgl32.Vec3{x, y, z}, mgl32.Vec3{0, 0, 1}))
+	InitTiletypes(conn)
+	InitMaterials(conn)
+	InitMap(conn)
+
+	for {
+		select {
+		case ch := <-stop:
+			close(ch)
+			return
+		default:
+		}
+		center := UpdateViewInfo(conn)
+		UpdateMap(conn, center)
+	}
 }

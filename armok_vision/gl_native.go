@@ -151,17 +151,15 @@ type Buffer struct {
 }
 
 func CleanMap() {
-	for _, pos := range Dirty {
+	dirtyLock.Lock()
+	defer dirtyLock.Unlock()
+
+	for pos, data := range Dirty {
 		if old, ok := Buffers[pos]; ok {
 			gl.DeleteBuffers(1, &old.Buffer)
 			delete(Buffers, pos)
 		}
-		if block, ok := Map[pos]; ok {
-			data := block.Generate(pos)
-			if len(data) == 0 {
-				continue
-			}
-
+		if len(data) != 0 {
 			var buffer uint32
 			gl.GenBuffers(1, &buffer)
 			gl.BindBuffer(gl.ARRAY_BUFFER, buffer)
@@ -173,9 +171,8 @@ func CleanMap() {
 				Size:   int32(len(data)),
 			}
 		}
+		delete(Dirty, pos)
 	}
-
-	Dirty = Dirty[:0]
 }
 
 func Render(ambient, direction, directional mgl32.Vec3) {
@@ -186,13 +183,14 @@ func Render(ambient, direction, directional mgl32.Vec3) {
 	gl.Uniform3f(UniDirection, direction[0], direction[1], direction[2])
 	gl.Uniform3f(UniDirectional, directional[0], directional[1], directional[2])
 
+	center := FindCenter()
 	for dx := int32(-rangeX); dx <= rangeX; dx++ {
 		for dy := int32(-rangeY); dy <= rangeY; dy++ {
 			for dz := int32(-rangeZdown); dz <= rangeZup; dz++ {
 				pos := [3]int32{
-					(ViewInfo.GetViewPosX()+(ViewInfo.GetViewSizeX()/2))/16 + dx,
-					(ViewInfo.GetViewPosY()+(ViewInfo.GetViewSizeY()/2))/16 + dy,
-					ViewInfo.GetViewPosZ() + dz,
+					center[0] + dx,
+					center[1] + dy,
+					center[2] + dz,
 				}
 				if buffer, ok := Buffers[pos]; ok {
 					const stride = 3 + 3 + 3
