@@ -58,8 +58,6 @@ type proxy_ctx struct {
 	w io.Writer
 
 	hashes map[[3]int32]uint32
-
-	Conn *dfhack.Conn
 }
 
 func (ctx *proxy_ctx) ReadMessage(req proto.Message) error {
@@ -215,10 +213,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetVersion()
-				return ctx.Respond(&dfproto.StringMessage{
-					Value: proto.String(resp),
-				}, text, err)
+				return ctx.WriteMessage(RemoteVersion)
 			},
 		},
 		{
@@ -231,10 +226,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetDFVersion()
-				return ctx.Respond(&dfproto.StringMessage{
-					Value: proto.String(resp),
-				}, text, err)
+				return ctx.WriteMessage(RemoteDFVersion)
 			},
 		},
 		{
@@ -247,7 +239,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetWorldInfo()
+				resp, text, err := Remote.GetWorldInfo()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -261,7 +253,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.ListEnums()
+				resp, text, err := Remote.ListEnums()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -275,7 +267,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.ListJobSkills()
+				resp, text, err := Remote.ListJobSkills()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -289,7 +281,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.ListMaterials(&req)
+				resp, text, err := Remote.ListMaterials(&req)
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -304,7 +296,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetGrowthList()
+				resp, text, err := Remote.GetGrowthList()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -319,7 +311,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetMaterialList()
+				resp, text, err := Remote.GetMaterialList()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -334,7 +326,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetTiletypeList()
+				resp, text, err := Remote.GetTiletypeList()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -368,13 +360,9 @@ var (
 				mapLock.Lock()
 				defer mapLock.Unlock()
 
-				mapOnce.Do(func() {
-					ctx.Conn.ResetMapHashes()
-				})
-
 				limit := req.BlocksNeeded
 				req.BlocksNeeded = nil
-				resp, text, err := ctx.Conn.GetBlockList(&req)
+				resp, text, err := Remote.GetBlockList(&req)
 				if ok, err1 := ctx.RespondPartial(text, err); !ok {
 					return err1
 				}
@@ -489,7 +477,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetPlantList(&req)
+				resp, text, err := Remote.GetPlantList(&req)
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -504,7 +492,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetUnitList()
+				resp, text, err := Remote.GetUnitList()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -519,7 +507,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetViewInfo()
+				resp, text, err := Remote.GetViewInfo()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -534,7 +522,7 @@ var (
 					return err
 				}
 
-				resp, text, err := ctx.Conn.GetMapInfo()
+				resp, text, err := Remote.GetMapInfo()
 				return ctx.Respond(resp, text, err)
 			},
 		},
@@ -585,6 +573,36 @@ func init() {
 	}
 }
 
+var remoteOnce sync.Once
+var Remote *dfhack.Conn
+var RemoteVersion *dfproto.StringMessage
+var RemoteDFVersion *dfproto.StringMessage
+
+func remote() {
+	var err error
+	Remote, err = dfhack.Connect()
+	if err != nil {
+		log.Panicln("remote connect:", err)
+	}
+
+	version, _, err := Remote.GetVersion()
+	if err != nil {
+		log.Panicln("remote GetVersion:", err)
+	}
+	RemoteVersion = &dfproto.StringMessage{Value: proto.String(version)}
+
+	version, _, err = Remote.GetDFVersion()
+	if err != nil {
+		log.Panicln("remote GetDFVersion:", err)
+	}
+	RemoteDFVersion = &dfproto.StringMessage{Value: proto.String(version)}
+
+	_, err = Remote.ResetMapHashes()
+	if err != nil {
+		log.Panicln("remote ResetMapHashes:", err)
+	}
+}
+
 func proxy(in *websocket.Conn) {
 	in.PayloadType = websocket.BinaryFrame
 
@@ -612,17 +630,11 @@ func proxy(in *websocket.Conn) {
 
 	log.Println(addr, "connect")
 
-	out, err := dfhack.Connect()
-	if err != nil {
-		log.Println(addr, "remote connect:", err)
-		return
-	}
-	defer out.Close()
+	remoteOnce.Do(remote)
 
 	var buf bytes.Buffer
 	ctx := &proxy_ctx{
-		w:    in,
-		Conn: out,
+		w: in,
 	}
 
 	for {
