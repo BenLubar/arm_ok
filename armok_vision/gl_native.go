@@ -99,6 +99,8 @@ var (
 
 	UniProjection int32
 	UniCamera     int32
+	UniModel      int32
+	UniInverse    int32
 
 	UniAmbient     int32
 	UniDirection   int32
@@ -163,6 +165,8 @@ func SetupGL() {
 
 	UniProjection = gl.GetUniformLocation(Program, gl.Str("projection\x00"))
 	UniCamera = gl.GetUniformLocation(Program, gl.Str("camera\x00"))
+	UniModel = gl.GetUniformLocation(Program, gl.Str("model\x00"))
+	UniInverse = gl.GetUniformLocation(Program, gl.Str("inverse\x00"))
 
 	UniAmbient = gl.GetUniformLocation(Program, gl.Str("ambient\x00"))
 	UniDirection = gl.GetUniformLocation(Program, gl.Str("direction\x00"))
@@ -225,6 +229,10 @@ func Render(ambient, direction, directional mgl32.Vec3) {
 	gl.Uniform3f(UniAmbient, ambient[0], ambient[1], ambient[2])
 	gl.Uniform3f(UniDirection, direction[0], direction[1], direction[2])
 	gl.Uniform3f(UniDirectional, directional[0], directional[1], directional[2])
+
+	ident := mgl32.Ident4()
+	gl.UniformMatrix4fv(UniModel, 1, false, &ident[0])
+	gl.UniformMatrix4fv(UniInverse, 1, false, &ident[0])
 
 	center := FindCenter()
 	for dx := int32(-rangeX); dx <= rangeX; dx++ {

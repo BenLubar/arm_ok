@@ -97,6 +97,8 @@ var (
 
 	UniProjection *js.Object
 	UniCamera     *js.Object
+	UniModel      *js.Object
+	UniInverse    *js.Object
 
 	UniAmbient     *js.Object
 	UniDirection   *js.Object
@@ -137,6 +139,8 @@ func SetupGL() {
 
 	UniProjection = gl.GetUniformLocation(Program, "projection")
 	UniCamera = gl.GetUniformLocation(Program, "camera")
+	UniModel = gl.GetUniformLocation(Program, "model")
+	UniInverse = gl.GetUniformLocation(Program, "inverse")
 
 	UniAmbient = gl.GetUniformLocation(Program, "ambient")
 	UniDirection = gl.GetUniformLocation(Program, "direction")
@@ -198,6 +202,10 @@ func Render(ambient, direction, directional mgl32.Vec3) {
 	gl.Uniform3f(UniAmbient, ambient[0], ambient[1], ambient[2])
 	gl.Uniform3f(UniDirection, direction[0], direction[1], direction[2])
 	gl.Uniform3f(UniDirectional, directional[0], directional[1], directional[2])
+
+	ident := mgl32.Ident4()
+	gl.UniformMatrix4fv(UniModel, false, ident[:])
+	gl.UniformMatrix4fv(UniInverse, false, ident[:])
 
 	center := FindCenter()
 	for dx := int32(-rangeX); dx <= rangeX; dx++ {
