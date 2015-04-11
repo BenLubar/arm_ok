@@ -53,7 +53,7 @@ func UpdateMap(conn *dfhack.Conn) {
 		MinY: proto.Int32(center[1] - rangeY),
 		MaxY: proto.Int32(center[1] + rangeY),
 		MinZ: proto.Int32(center[2] - rangeZchunk - mapSame),
-		MaxZ: proto.Int32(center[2] + rangeZup - mapSame),
+		MaxZ: proto.Int32(center[2] + rangeZup + 1 - mapSame),
 
 		BlocksNeeded: proto.Int32(1),
 	})
