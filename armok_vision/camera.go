@@ -9,39 +9,44 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-var viewInfo *RemoteFortressReader.ViewInfo
-var viewInfoLock sync.Mutex
+var (
+	viewInfo     *RemoteFortressReader.ViewInfo
+	viewOverride *[3]int32
+	viewLock     sync.Mutex
+)
 
-func UpdateViewInfo(conn *dfhack.Conn) [3]int32 {
+func UpdateViewInfo(conn *dfhack.Conn) {
 	info, _, err := conn.GetViewInfo()
 	if err != nil {
 		panic(err)
 	}
 
-	viewInfoLock.Lock()
+	viewLock.Lock()
 	viewInfo = info
-	viewInfoLock.Unlock()
-
-	x, y, z := findCenter(info)
-
-	return [3]int32{x / 16, y / 16, z}
+	viewLock.Unlock()
 }
 
-func findCenter(info *RemoteFortressReader.ViewInfo) (x, y, z int32) {
+func findCenter() (x, y, z int32) {
+	viewLock.Lock()
+	info := viewInfo
+	override := viewOverride
+	viewLock.Unlock()
+
+	if override != nil {
+		return override[0], override[1], override[2]
+	}
+
 	if info == nil {
 		return
 	}
+
 	return info.GetViewPosX() + (info.GetViewSizeX() / 2),
 		info.GetViewPosY() + (info.GetViewSizeY() / 2),
 		info.GetViewPosZ()
 }
 
 func FindCenter() [3]int32 {
-	viewInfoLock.Lock()
-	info := viewInfo
-	viewInfoLock.Unlock()
-
-	x, y, z := findCenter(info)
+	x, y, z := findCenter()
 	return [3]int32{x / 16, y / 16, z}
 }
 
@@ -88,14 +93,7 @@ func lerp(v *mgl32.Vec3, start *time.Time, pos, target *mgl32.Vec3, dur time.Dur
 }
 
 func CalculateCamera() mgl32.Mat4 {
-	viewInfoLock.Lock()
-	info := viewInfo
-	viewInfoLock.Unlock()
-
-	if info == nil {
-		return mgl32.Ident4()
-	}
-	x, y, z := findCenter(info)
+	x, y, z := findCenter()
 
 	now := time.Now()
 

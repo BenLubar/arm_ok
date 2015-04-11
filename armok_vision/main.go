@@ -32,20 +32,24 @@ func main() {
 		<-ch
 	}()
 
-	for {
+	for !ShouldQuit() {
+		Input()
+
 		PositionCamera(CalculateCamera())
 		CleanMap()
 
 		Render(Ambient, Direction, Directional)
-		DoEvents()
-
-		if ShouldQuit() {
-			break
-		}
 	}
 }
 
 func Network(stop chan chan struct{}) {
+	var ch chan struct{}
+	defer func() {
+		if ch != nil {
+			close(ch)
+		}
+	}()
+
 	conn, err := dfhack.Connect()
 	if err != nil {
 		panic(err)
@@ -58,12 +62,11 @@ func Network(stop chan chan struct{}) {
 
 	for {
 		select {
-		case ch := <-stop:
-			close(ch)
+		case ch = <-stop:
 			return
 		default:
 		}
-		center := UpdateViewInfo(conn)
-		UpdateMap(conn, center)
+		UpdateViewInfo(conn)
+		UpdateMap(conn)
 	}
 }

@@ -9,11 +9,22 @@ import (
 )
 
 var gl *webgl.Context
+var keys = make(map[int]bool) // not synchronized because JavaScript doesn't have threads and synchronization would require spawning goroutines on each key press.
 
 func InitGL() error {
 	ctx, err := webgl.NewContext(js.Global.Get("document").Call("querySelector", "#canvas"), webgl.DefaultAttributes())
 
 	gl = ctx
+
+	js.Global.Call("addEventListener", "keydown", func(e *js.Object) {
+		code := e.Get("keyCode").Int()
+		if _, ok := keys[code]; !ok {
+			keys[code] = false
+		}
+	})
+	js.Global.Call("addEventListener", "keyup", func(e *js.Object) {
+		delete(keys, e.Get("keyCode").Int())
+	})
 
 	return err
 }
@@ -33,8 +44,52 @@ func ShouldQuit() bool {
 	return <-QuitChan
 }
 
-func DoEvents() {
-	// TODO
+const (
+	KeyA = 'A'
+	KeyB = 'B'
+	KeyC = 'C'
+	KeyD = 'D'
+	KeyE = 'E'
+	KeyF = 'F'
+	KeyG = 'G'
+	KeyH = 'H'
+	KeyI = 'I'
+	KeyJ = 'J'
+	KeyK = 'K'
+	KeyL = 'L'
+	KeyM = 'M'
+	KeyN = 'N'
+	KeyO = 'O'
+	KeyP = 'P'
+	KeyQ = 'Q'
+	KeyR = 'R'
+	KeyS = 'S'
+	KeyT = 'T'
+	KeyU = 'U'
+	KeyV = 'V'
+	KeyW = 'W'
+	KeyX = 'X'
+	KeyY = 'Y'
+	KeyZ = 'Z'
+
+	// Source: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
+	KeyUp       = 38
+	KeyDown     = 40
+	KeyLeft     = 37
+	KeyRight    = 39
+	KeyPageUp   = 33
+	KeyPageDown = 34
+)
+
+func IsKeyPressed(key int, repeat bool) bool {
+	if r, ok := keys[key]; !ok {
+		return false
+	} else if !r {
+		keys[key] = true
+		return true
+	} else {
+		return repeat
+	}
 }
 
 var (

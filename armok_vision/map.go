@@ -43,7 +43,9 @@ const (
 	rangeZchunk = 5
 )
 
-func UpdateMap(conn *dfhack.Conn, center [3]int32) {
+func UpdateMap(conn *dfhack.Conn) {
+	center := FindCenter()
+
 	blocks, _, err := conn.GetBlockList(&RemoteFortressReader.BlockRequest{
 		MinX: proto.Int32(center[0] - rangeX),
 		MaxX: proto.Int32(center[0] + rangeX),

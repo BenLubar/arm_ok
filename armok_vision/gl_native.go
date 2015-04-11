@@ -43,12 +43,55 @@ func CleanupGL() {
 }
 
 func ShouldQuit() bool {
+	glfw.PollEvents()
 	return window.ShouldClose()
 }
 
-func DoEvents() {
-	glfw.PollEvents()
-	// TODO
+const (
+	KeyA = glfw.KeyA
+	KeyB = glfw.KeyB
+	KeyC = glfw.KeyC
+	KeyD = glfw.KeyD
+	KeyE = glfw.KeyE
+	KeyF = glfw.KeyF
+	KeyG = glfw.KeyG
+	KeyH = glfw.KeyH
+	KeyI = glfw.KeyI
+	KeyJ = glfw.KeyJ
+	KeyK = glfw.KeyK
+	KeyL = glfw.KeyL
+	KeyM = glfw.KeyM
+	KeyN = glfw.KeyN
+	KeyO = glfw.KeyO
+	KeyP = glfw.KeyP
+	KeyQ = glfw.KeyQ
+	KeyR = glfw.KeyR
+	KeyS = glfw.KeyS
+	KeyT = glfw.KeyT
+	KeyU = glfw.KeyU
+	KeyV = glfw.KeyV
+	KeyW = glfw.KeyW
+	KeyX = glfw.KeyX
+	KeyY = glfw.KeyY
+	KeyZ = glfw.KeyZ
+
+	KeyUp       = glfw.KeyUp
+	KeyDown     = glfw.KeyDown
+	KeyLeft     = glfw.KeyLeft
+	KeyRight    = glfw.KeyRight
+	KeyPageUp   = glfw.KeyPageUp
+	KeyPageDown = glfw.KeyPageDown
+)
+
+func IsKeyPressed(key glfw.Key, repeat bool) bool {
+	switch window.GetKey(key) {
+	case glfw.Press:
+		return true
+	case glfw.Repeat:
+		return repeat
+	default:
+		return false
+	}
 }
 
 var (
