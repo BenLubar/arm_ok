@@ -73,5 +73,6 @@ func Network(stop chan chan struct{}) {
 		}
 		UpdateViewInfo(conn)
 		UpdateMap(conn)
+		UpdateUnits(conn)
 	}
 }

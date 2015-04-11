@@ -158,12 +158,23 @@ func SetupGL() {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.CULL_FACE)
 	gl.FrontFace(gl.CW)
+
+	buffer := gl.CreateBuffer()
+	gl.BindBuffer(gl.ARRAY_BUFFER, buffer)
+
+	gl.BufferData(gl.ARRAY_BUFFER, UnitData, gl.STATIC_DRAW)
+
+	UnitBuffer = Buffer{
+		Buffer: buffer,
+		Size:   len(UnitData),
+	}
 }
 
 func PositionCamera(camera mgl32.Mat4) {
 	gl.UniformMatrix4fv(UniCamera, false, camera[:])
 }
 
+var UnitBuffer Buffer
 var Buffers = make(map[[3]int32]Buffer)
 
 type Buffer struct {
@@ -228,5 +239,25 @@ func Render(ambient, direction, directional mgl32.Vec3) {
 			}
 		}
 	}
+
+	unitLock.Lock()
+	units := Units
+	unitLock.Unlock()
+
+	for _, u := range units {
+		transform := mgl32.Translate3D(float32(u.Pos[0]), float32(u.Pos[1]), float32(u.Pos[2]))
+		gl.UniformMatrix4fv(UniModel, false, transform[:])
+		transform = transform.Inv().Transpose()
+		gl.UniformMatrix4fv(UniInverse, false, transform[:])
+
+		const stride = 3 + 3 + 3
+		gl.BindBuffer(gl.ARRAY_BUFFER, UnitBuffer.Buffer)
+		gl.VertexAttribPointer(AttrVert, 3, gl.FLOAT, false, stride*float32_size, 0*float32_size)
+		gl.VertexAttribPointer(AttrColor, 3, gl.FLOAT, false, stride*float32_size, 3*float32_size)
+		gl.VertexAttribPointer(AttrNormal, 3, gl.FLOAT, false, stride*float32_size, 6*float32_size)
+
+		gl.DrawArrays(gl.TRIANGLES, 0, UnitBuffer.Size/stride)
+	}
+
 	gl.Flush()
 }
