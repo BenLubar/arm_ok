@@ -272,8 +272,17 @@ func Render(ambient, direction, directional mgl32.Vec3) {
 	units := Units
 	unitLock.Unlock()
 
-	for _, u := range units {
-		transform := mgl32.Translate3D(float32(u.Pos[0]), float32(u.Pos[1]), float32(u.Pos[2]))
+	for id, u := range units {
+		if center[0]-rangeX > u.Pos[0]/16 ||
+			center[0]+rangeX < u.Pos[0]/16 ||
+			center[1]-rangeY > u.Pos[1]/16 ||
+			center[1]+rangeY < u.Pos[1]/16 ||
+			center[2]-rangeZdown > u.Pos[2] ||
+			center[2]+rangeZup < u.Pos[2] {
+			continue
+		}
+
+		transform := mgl32.Translate3D(float32(u.Pos[0])+0.5, float32(u.Pos[1])+0.5, float32(u.Pos[2])+0.5).Mul4(mgl32.HomogRotate3DZ(float32(id) / 100)).Mul4(mgl32.Translate3D(-0.5, -0.5, -0.5))
 		gl.UniformMatrix4fv(UniModel, 1, false, &transform[0])
 		transform = transform.Inv().Transpose()
 		gl.UniformMatrix4fv(UniInverse, 1, false, &transform[0])
