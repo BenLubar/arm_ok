@@ -159,14 +159,19 @@ func SetupGL() {
 	gl.Enable(gl.CULL_FACE)
 	gl.FrontFace(gl.CW)
 
+	UnitBuffer = MakeBuffer(UnitData)
+	NotLoadedBuffer = MakeBuffer(NotLoadedData)
+}
+
+func MakeBuffer(data []float32) Buffer {
 	buffer := gl.CreateBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, buffer)
 
-	gl.BufferData(gl.ARRAY_BUFFER, UnitData, gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
 
-	UnitBuffer = Buffer{
+	return Buffer{
 		Buffer: buffer,
-		Size:   len(UnitData),
+		Size:   len(data),
 	}
 }
 
@@ -174,7 +179,7 @@ func PositionCamera(camera mgl32.Mat4) {
 	gl.UniformMatrix4fv(UniCamera, false, camera[:])
 }
 
-var UnitBuffer Buffer
+var UnitBuffer, NotLoadedBuffer Buffer
 var Buffers = make(map[[3]int32]Buffer)
 
 type Buffer struct {
@@ -192,15 +197,7 @@ func CleanMap() {
 			delete(Buffers, pos)
 		}
 		if len(data) != 0 {
-			buffer := gl.CreateBuffer()
-			gl.BindBuffer(gl.ARRAY_BUFFER, buffer)
-
-			gl.BufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
-
-			Buffers[pos] = Buffer{
-				Buffer: buffer,
-				Size:   len(data),
-			}
+			Buffers[pos] = MakeBuffer(data)
 		}
 		delete(Dirty, pos)
 	}
@@ -215,7 +212,6 @@ func Render(ambient, direction, directional mgl32.Vec3) {
 	gl.Uniform3f(UniDirectional, directional[0], directional[1], directional[2])
 
 	ident := mgl32.Ident4()
-	gl.UniformMatrix4fv(UniModel, false, ident[:])
 	gl.UniformMatrix4fv(UniInverse, false, ident[:])
 
 	center := FindCenter()
@@ -227,15 +223,21 @@ func Render(ambient, direction, directional mgl32.Vec3) {
 					center[1] + dy,
 					center[2] + dz,
 				}
-				if buffer, ok := Buffers[pos]; ok {
-					const stride = 3 + 3 + 3
-					gl.BindBuffer(gl.ARRAY_BUFFER, buffer.Buffer)
-					gl.VertexAttribPointer(AttrVert, 3, gl.FLOAT, false, stride*float32_size, 0*float32_size)
-					gl.VertexAttribPointer(AttrColor, 3, gl.FLOAT, false, stride*float32_size, 3*float32_size)
-					gl.VertexAttribPointer(AttrNormal, 3, gl.FLOAT, false, stride*float32_size, 6*float32_size)
+				translate := mgl32.Translate3D(float32(pos[0])*16, float32(pos[1])*16, float32(pos[2]))
+				gl.UniformMatrix4fv(UniModel, false, translate[:])
+				// We don't set the inverse matrix because we are only translating.
 
-					gl.DrawArrays(gl.TRIANGLES, 0, buffer.Size/stride)
+				buffer, ok := Buffers[pos]
+				if !ok {
+					buffer = NotLoadedBuffer
 				}
+				const stride = 3 + 3 + 3
+				gl.BindBuffer(gl.ARRAY_BUFFER, buffer.Buffer)
+				gl.VertexAttribPointer(AttrVert, 3, gl.FLOAT, false, stride*float32_size, 0*float32_size)
+				gl.VertexAttribPointer(AttrColor, 3, gl.FLOAT, false, stride*float32_size, 3*float32_size)
+				gl.VertexAttribPointer(AttrNormal, 3, gl.FLOAT, false, stride*float32_size, 6*float32_size)
+
+				gl.DrawArrays(gl.TRIANGLES, 0, buffer.Size/stride)
 			}
 		}
 	}

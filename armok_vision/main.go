@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	Perspective = mgl32.Perspective(math.Pi/2, 800.0/600.0, 0.1, 1000)
+	Perspective = mgl32.Perspective(math.Pi/2, 800.0/600.0, 0.1, 100)
 	Ambient     = mgl32.Vec3{0.1, 0.1, 0.1}
 	Direction   = mgl32.Vec3{-2, 5, -20}.Normalize()
 	Directional = mgl32.Vec3{1, 1, 1}
