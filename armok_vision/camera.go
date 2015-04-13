@@ -1,14 +1,12 @@
 package main
 
 import (
-	"log"
 	"sync"
 	"time"
 
 	"github.com/BenLubar/arm_ok/dfhack"
 	"github.com/BenLubar/arm_ok/dfhack/RemoteFortressReader"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -24,9 +22,6 @@ func UpdateViewInfo(conn *dfhack.Conn) {
 	}
 
 	viewLock.Lock()
-	if viewOverride == nil && !proto.Equal(viewInfo, info) {
-		log.Println("camera move:", viewInfo, "->", info)
-	}
 	viewInfo = info
 	viewLock.Unlock()
 }

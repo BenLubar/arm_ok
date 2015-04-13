@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"sync"
 
 	"github.com/BenLubar/arm_ok/dfhack"
@@ -167,8 +166,17 @@ func UpdateMap(conn *dfhack.Conn) {
 		}
 
 		if any {
-			log.Println("got block", pos)
 			next = append(next, dirty{pos, tiles.Generate(pos)})
+			checkAdjacent := func(dx, dy int32) {
+				o := [3]int32{pos[0] + dx, pos[1] + dy, pos[2]}
+				if b := Map[o]; b != nil {
+					next = append(next, dirty{o, b.Generate(o)})
+				}
+			}
+			checkAdjacent(-1, 0)
+			checkAdjacent(0, 1)
+			checkAdjacent(0, -1)
+			checkAdjacent(0, 1)
 		}
 	}
 

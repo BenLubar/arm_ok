@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"math"
 
 	"github.com/BenLubar/arm_ok/dfhack"
@@ -9,11 +8,21 @@ import (
 )
 
 var (
-	Perspective = mgl32.Perspective(math.Pi/2, 800.0/600.0, 0.1, 100)
+	Width, Height   = 800, 600
+	Width2, Height2 = powerOf2(Width), powerOf2(Height)
+
+	Perspective = mgl32.Perspective(math.Pi/2, float32(Width)/float32(Height), 0.1, 100)
 	Ambient     = mgl32.Vec3{0.1, 0.1, 0.1}
 	Direction   = mgl32.Vec3{-2, 5, -20}.Normalize()
 	Directional = mgl32.Vec3{1, 1, 1}
 )
+
+var ScreenData = []float32{
+	0, 0,
+	0, 1,
+	1, 0,
+	1, 1,
+}
 
 const float32_size = 4
 
@@ -57,13 +66,9 @@ func Network(stop chan chan struct{}) {
 	}
 	defer conn.Close()
 
-	log.Println("connected")
 	InitTiletypes(conn)
-	log.Println("loaded tile types")
 	InitMaterials(conn)
-	log.Println("loaded materials")
 	InitMap(conn)
-	log.Println("starting to load map")
 
 	for {
 		select {
@@ -75,4 +80,16 @@ func Network(stop chan chan struct{}) {
 		UpdateMap(conn)
 		UpdateUnits(conn)
 	}
+}
+
+func powerOf2(x int) int {
+	x--
+	x |= x >> 1
+	x |= x >> 2
+	x |= x >> 4
+	x |= x >> 8
+	x |= x >> 16
+	x |= x >> 32
+	x++
+	return x
 }

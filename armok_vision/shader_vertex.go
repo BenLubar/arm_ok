@@ -3,7 +3,9 @@ package main
 const VertexShader = `
 #version 100
 
-precision mediump float;
+precision highp float;
+
+uniform lowp int pass;
 
 uniform mat4 projection;
 uniform mat4 camera;
@@ -22,6 +24,10 @@ varying vec3 v_color;
 
 void main() {
 	gl_Position = projection * camera * model * vec4(vert, 1.0);
-	v_color = color * (ambient + directional * dot((inverse * vec4(normal, 0.0)).xyz, -direction));
+	if (pass == 0) {
+		v_color = (projection * camera * model * vec4(normal, 0.0)).xyz / 2.0 + 0.5;
+	} else {
+		v_color = color * (ambient + directional * dot((inverse * vec4(normal, 0.0)).xyz, -direction));
+	}
 }
 `

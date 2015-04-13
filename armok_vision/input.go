@@ -1,9 +1,6 @@
 package main
 
-import (
-	"log"
-	"time"
-)
+import "time"
 
 var LastInput time.Time
 
@@ -51,11 +48,9 @@ func Input() {
 	defer viewLock.Unlock()
 
 	if IsKeyPressed(KeyF, false) {
-		log.Println("camera following")
 		viewOverride = nil
 	} else if moved {
 		pos := [3]int32{x, y, z}
-		log.Println("moved camera to", pos)
 		viewOverride = &pos
 	}
 }
